@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: llm-quiz-solver
+    env: docker
+    repo: https://github.com/Neeljbf04/LLM_Quiz
+    plan: free
+    healthCheckPath: /docs
+    autoDeploy: true
+    envVars:
+      - key: SECRET_STRING
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
