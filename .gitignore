@@ -1,2 +1,30 @@
+# Virtual environments
+.venv/
+env/
 llm/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Env secrets
+.env
+
+# Generated plots
+temp_plots/
 temp/
+# Build artifacts
+dist/
+build/
+*.egg-info
+
+# Pytest cache
+.pytest_cache/

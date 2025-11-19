@@ -1,9 +1,7 @@
-openai               # if using OpenAI
-requests
-pandas
-matplotlib
-pyyaml
-fastapi             # optional for an API
-uvicorn             # optional
-python-dotenv
-pytest
+# requirements.txt
+pandas>=1.4
+matplotlib>=3.5
+requests>=2.28
+python-dotenv>=1.0
+pytest>=7.0
+Orchestrator
