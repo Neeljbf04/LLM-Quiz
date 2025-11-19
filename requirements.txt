@@ -1,0 +1,9 @@
+openai               # if using OpenAI
+requests
+pandas
+matplotlib
+pyyaml
+fastapi             # optional for an API
+uvicorn             # optional
+python-dotenv
+pytest
