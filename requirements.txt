@@ -7,3 +7,6 @@ pytest>=7.0
 Orchestrator
 pydantic>=1.10
 groq>=0.1.0
+fastapi 
+uvicorn 
+playwright

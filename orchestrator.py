@@ -1,78 +1,43 @@
-# orchestrator.py
-from modules.llm_engine import LLMEngine
-from modules.data_fetch import download_csv
-from modules.data_clean import drop_na, parse_dates
-from modules.visualize import line_plot
-from modules.utils import setup_logging
-from modules.schemas import Plan
 import logging
 
 logger = logging.getLogger("orchestrator")
-setup_logging()
 
 class Orchestrator:
-    def __init__(self, llm_engine: LLMEngine):
+    def __init__(self, llm_engine):
         self.llm = llm_engine
 
-    def run(self, query: str) -> dict:
-        plan_dict = self.llm.generate_plan(query)
-        logger.info("Plan generated: %s", plan_dict)
+    async def solve_text(self, question_text: str, quiz_url: str):
+        """
+        Step A – simplest mode.
+        LLM receives only the question text and returns final answer.
+        """
+        logger.info("Step A: Sending question to LLM...")
 
-        # Plan must be a dict containing 'steps'
-        if not isinstance(plan_dict, dict) or "steps" not in plan_dict:
-            return {"error": "invalid_plan_shape"}
+        prompt = f"""
+You are an expert analysis assistant.
 
-        # Validate with pydantic
-        if not self.llm.validate_plan(plan_dict):
-            logger.error("Plan failed validation")
-            return {"error": "invalid_plan"}
+A quiz question is shown below. 
+Respond ONLY with a JSON object of the form:
 
-        steps = plan_dict["steps"]
-        df = None
-        last_plot = None
-        analysis_result = None
+{{"answer": <final answer>}}
 
-        for step in steps:
-            action = step.get("action")
-            args = step.get("args", {}) or {}
-            try:
-                if action == "fetch":
-                    url = args["url"]
-                    df = download_csv(url)
-                    logger.info("Fetched data: %s rows", len(df))
-                elif action == "clean":
-                    ops = args.get("operations", [])
-                    for o in ops:
-                        op = o.get("op")
-                        if op == "parse_dates_if_possible":
-                            cols = o.get("cols", [])
-                            df = parse_dates(df, cols)
-                        elif op == "dropna":
-                            subset = o.get("subset")
-                            df = drop_na(df, subset)
-                elif action == "visualize":
-                    x = args["x"]
-                    y = args["y"]
-                    last_plot = line_plot(df, x, y)
-                elif action == "analyze":
-                    method = args.get("method")
-                    if method == "row_count":
-                        analysis_result = {"rows": int(len(df))}
-                    elif method == "head":
-                        n = int(args.get("n", 5))
-                        analysis_result = {"head": df.head(n).to_dict(orient="records")}
-                elif action == "final_answer":
-                    if analysis_result is not None:
-                        return {"analysis": analysis_result, "plot": last_plot}
-                    if last_plot is not None:
-                        return {"plot": last_plot}
-                    msg = args.get("message", "Done")
-                    return {"message": msg}
-                else:
-                    logger.error("Unknown action in plan: %s", action)
-                    return {"error": "unknown_action", "action": action}
-            except Exception as e:
-                logger.exception("Step failed: %s", action)
-                return {"error": "step_failed", "step": action, "reason": str(e)}
+Do NOT include explanations. Only JSON.
 
-        return {"error": "no_final_output"}
+Question:
+{question_text}
+"""
+
+        try:
+            raw = await self.llm.chat_raw(prompt)
+        except Exception as ex:
+            raise RuntimeError(f"LLM failed: {ex}")
+
+        # Try to parse JSON
+        import json
+        try:
+            parsed = json.loads(raw)
+        except:
+            # If the model returned plain text, wrap it
+            parsed = {"answer": raw.strip()}
+
+        return parsed
