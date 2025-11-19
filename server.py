@@ -42,6 +42,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
 _playwright = None
 _browser = None
 orchestrator = None
